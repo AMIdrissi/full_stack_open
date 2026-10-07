@@ -6,8 +6,8 @@ const sum = (list_of_numbers) => {
   return S;
 };
 
-const Total = ({ exercises }) => {
-  return <p>Number of exercises {sum(exercises)}</p>;
+const Total = ({ parts }) => {
+  return <p>Number of exercises {sum(parts.map((part) => part.exercises))}</p>;
 };
 
 export default Total;
