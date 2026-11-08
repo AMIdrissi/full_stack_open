@@ -1,4 +1,19 @@
+import weatherService from "../services/weatherService";
+import { useEffect, useState } from "react";
+import WeatherInfo from "./WeatherInfo";
+
 const CountryDetails = ({ country }) => {
+  const [weatherData, setWeatherData] = useState(null);
+
+  useEffect(() => {
+    if (country !== null) {
+      const [lat, lon] = country.latlng;
+      weatherService.getWeatherInfo({ lat, lon }).then((data) => {
+        setWeatherData(data);
+      });
+    }
+  }, [country]);
+
   if (country === null) {
     return null;
   } else {
@@ -16,6 +31,10 @@ const CountryDetails = ({ country }) => {
           ))}
         </ul>
         <img src={country.flags.png} alt={country.flags.alt} />
+        <WeatherInfo
+          weatherData={weatherData}
+          capitalName={country.capital[0]}
+        />
       </div>
     );
   }

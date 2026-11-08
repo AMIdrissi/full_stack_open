@@ -1,5 +1,5 @@
-import CountryDetails from "./components/CountryDetails";
-import Countries from "./components/Countries";
+import Countries from "./Countries";
+import CountryDetails from "./CountryDetails";
 
 function MainBody({
   filteredCountries,

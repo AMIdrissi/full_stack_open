@@ -25,4 +25,6 @@ const updatePerson = (personUpdated) => {
     .then((response) => response.data).catch();
 };
 
+
+
 export default { createPerson, getAll, deletePerson, updatePerson };
