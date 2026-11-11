@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const URL = "http://localhost:3001";
+const URL = "/api";
 
 const createPerson = ({ newNameValue, newNumber }) => {
   return axios
@@ -22,9 +22,7 @@ const deletePerson = (id) => {
 const updatePerson = (personUpdated) => {
   return axios
     .put(`${URL}/persons/${personUpdated.id}`, personUpdated)
-    .then((response) => response.data).catch();
+    .then((response) => response.data);
 };
-
-
 
 export default { createPerson, getAll, deletePerson, updatePerson };
