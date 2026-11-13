@@ -1,7 +1,9 @@
-import express, { json } from "express";
+import config from "dotenv/config";
+import express from "express";
 import morgan from "morgan";
+import Entry from "./models/entry.js";
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 const server = express();
 server.use(express.json());
@@ -10,92 +12,111 @@ server.use(express.static("dist"));
 morgan.token("json_req", function (req, res) {
   return JSON.stringify(req.body);
 });
+
 server.use(
   morgan(
     ":method :url :status :res[content-length] - :response-time ms :json_req",
   ),
 );
 
-let persons = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-const getMaxId = () =>
-  (
-    Math.max(...persons.map((p) => Number.parseInt(p.id))) +
-    (Math.round(Math.random() * 10) + 1)
-  ).toString();
-
-const nameExists = (name) => persons.find((p) => p.name === name);
-
 server.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Entry.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
 server.get("/api/persons/info", (request, response) => {
   const requestTime = Date();
-  const personsCount = persons.length;
 
-  const htmlTemplate =
-    `<p>Phonebook has info for ${personsCount} people</p>` +
-    `<p>${requestTime.toString()}</p>`;
-  response.end(htmlTemplate);
+  Entry.countDocuments({}).then((personsCount) => {
+    const htmlTemplate =
+      `<p>Phonebook has info for ${personsCount.toString()} people</p>` +
+      `<p>${requestTime.toString()}</p>`;
+    response.end(htmlTemplate);
+  });
 });
 
-server.get("/api/persons/:id", (request, response) => {
+server.get("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
-  const person = persons.find((p) => p.id === id);
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).json({ error: "invalid person id" });
-  }
+  Entry.findById(id)
+    .then((person) => {
+      if (person) {
+        response.json(person);
+      } else {
+        response.status(404).json({ error: "invalid person id" });
+      }
+    })
+    .catch((error) => next(error));
 });
 
-server.delete("/api/persons/:id", (request, response) => {
+server.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
-  const person = persons.find((p) => p.id === id);
-  if (person) {
-    persons = persons.filter((p) => p.id !== id);
-    response.status(204).end();
-  } else {
-    response.status(404).json({ error: "invalid person id" });
-  }
+  Entry.findByIdAndDelete(id)
+    .then((person) => {
+      if (person) {
+        response.status(204).end();
+      } else {
+        response.status(404).json({ error: "invalid person id" });
+      }
+    })
+    .catch((error) => next(error));
 });
 
 server.post("/api/persons", (requests, response) => {
   const body = requests.body;
   if (!body.name || !body.number) {
     return response.status(400).json({ error: "invalid person entry" });
-  } else if (nameExists(body.name)) {
-    return response
-      .status(409)
-      .json({ error: `Person ${body.name} already exists` });
   } else {
-    const newPerson = { ...body, id: getMaxId() };
-    persons = persons.concat(newPerson);
-    response.status(201).json(newPerson);
+    Entry.findOne({ name: body.name }).then((result) => {
+      if (result) {
+        response
+          .status(409)
+          .json({ error: `Person ${body.name} already exists` });
+      } else {
+        // ik this could use new Entry(body); but eh
+        const newEntry = new Entry({ name: body.name, number: body.number });
+
+        newEntry.save().then((newPerson) => {
+          response.status(201).json(newPerson);
+        });
+      }
+    });
   }
 });
+
+server.put("/api/persons/:id", (request, response, next) => {
+  const { name, number } = request.body;
+  const id = request.params.id;
+  Entry.findById(id)
+    .then((person) => {
+      if (person) {
+        person.name = name;
+        person.number = number;
+
+        return person
+          .save()
+          .then((updatedPerson) => {
+            response.json(updatedPerson);
+          })
+          .catch((error) => next(error));
+      } else {
+        return response.status(404).end();
+      }
+    })
+    .catch((error) => next(error));
+});
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).end();
+  }
+
+  next(error);
+};
+
+server.use(errorHandler);
 
 server.listen(PORT, () => {
   console.log(`listening on port ${PORT}`);
