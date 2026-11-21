@@ -1,4 +1,3 @@
-import config from 'dotenv/config'
 import express from 'express'
 import morgan from 'morgan'
 import Entry from './models/entry.js'
