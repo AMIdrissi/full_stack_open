@@ -67,9 +67,9 @@ const PersonForm = ({
         })
         .catch((error) => {
           setIsError(true);
-          setMessage(
-            `Information of ${newNameValue} has already been removed from the server`,
-          );
+          console.log(error);
+
+          setMessage(error.response.data.error);
           resetMessage();
         });
     } else {

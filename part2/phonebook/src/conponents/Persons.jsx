@@ -1,8 +1,7 @@
 const Persons = ({ persons, searchQuery, handleDelete }) => {
-  const filteredPersons = persons.filter(
-    (person) =>
-      person.name.toLowerCase().search(searchQuery.toLowerCase()) >= 0,
-  );
+  const filteredPersons = persons.filter((person) => {
+    return person.name.toLowerCase().search(searchQuery.toLowerCase()) >= 0;
+  });
 
   const handleDeleteClickEvent = (id) => {
     const person = persons.find((p) => p.id === id);

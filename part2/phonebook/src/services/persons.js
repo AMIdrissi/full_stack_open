@@ -8,7 +8,7 @@ const createPerson = ({ newNameValue, newNumber }) => {
       name: newNameValue,
       number: newNumber,
     })
-    .then((response) => response.data);
+    .then((response) => response.data)
 };
 
 const getAll = () => {
